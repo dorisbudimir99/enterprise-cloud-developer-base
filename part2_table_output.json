@@ -1,0 +1,71 @@
+﻿{
+    "Table":  {
+                  "AttributeDefinitions":  [
+                                               {
+                                                   "AttributeName":  "coupon_id",
+                                                   "AttributeType":  "S"
+                                               },
+                                               {
+                                                   "AttributeName":  "provider_id",
+                                                   "AttributeType":  "S"
+                                               },
+                                               {
+                                                   "AttributeName":  "campaign_id",
+                                                   "AttributeType":  "S"
+                                               }
+                                           ],
+                  "TableName":  "coupons",
+                  "KeySchema":  [
+                                    {
+                                        "AttributeName":  "coupon_id",
+                                        "KeyType":  "HASH"
+                                    }
+                                ],
+                  "TableStatus":  "ACTIVE",
+                  "CreationDateTime":  "2026-10-20T23:25:51.367000-06:00",
+                  "ProvisionedThroughput":  {
+                                                "LastIncreaseDateTime":  "1969-12-31T17:00:00-07:00",
+                                                "LastDecreaseDateTime":  "1969-12-31T17:00:00-07:00",
+                                                "NumberOfDecreasesToday":  0,
+                                                "ReadCapacityUnits":  25,
+                                                "WriteCapacityUnits":  10
+                                            },
+                  "TableSizeBytes":  954,
+                  "ItemCount":  3,
+                  "TableArn":  "arn:aws:dynamodb:us-east-1:000000000000:table/coupons",
+                  "TableId":  "b877dcfb-4a32-4be9-b3a4-b94c5f778eed",
+                  "GlobalSecondaryIndexes":  [
+                                                 {
+                                                     "IndexName":  "provider_id-campaign_id-index",
+                                                     "KeySchema":  [
+                                                                       {
+                                                                           "AttributeName":  "provider_id",
+                                                                           "KeyType":  "HASH"
+                                                                       },
+                                                                       {
+                                                                           "AttributeName":  "campaign_id",
+                                                                           "KeyType":  "RANGE"
+                                                                       }
+                                                                   ],
+                                                     "Projection":  {
+                                                                        "ProjectionType":  "ALL"
+                                                                    },
+                                                     "IndexStatus":  "ACTIVE",
+                                                     "ProvisionedThroughput":  {
+                                                                                   "NumberOfDecreasesToday":  0,
+                                                                                   "ReadCapacityUnits":  25,
+                                                                                   "WriteCapacityUnits":  10
+                                                                               },
+                                                     "IndexSizeBytes":  954,
+                                                     "ItemCount":  3,
+                                                     "IndexArn":  "arn:aws:dynamodb:us-east-1:000000000000:table/coupons/index/provider_id-campaign_id-index"
+                                                 }
+                                             ],
+                  "DeletionProtectionEnabled":  false,
+                  "WarmThroughput":  {
+                                         "ReadUnitsPerSecond":  5,
+                                         "WriteUnitsPerSecond":  5,
+                                         "Status":  "ACTIVE"
+                                     }
+              }
+}

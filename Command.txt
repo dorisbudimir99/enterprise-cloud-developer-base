@@ -32,3 +32,35 @@ npx newman run .\newman_tests\coupons_newman.json --env-var "apiId=$API_ID" --re
 # Review resources.
 aws --no-cli-pager --endpoint-url http://localhost:4566 --profile localstack iam list-role-policies --role-name coupons_lambda_role
 aws --no-cli-pager --endpoint-url http://localhost:4566 --profile localstack lambda get-function-configuration --function-name coupons_list
+
+Assessment Part 2 commands
+
+# Create and seed the coupons table, update both Lambdas, and add the index.
+wsl bash -lc "cd /mnt/c/Users/doris/enterprise-cloud-developer-base && export AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 AWS_PAGER=''; bash scripts/t2_create_dynamodb_table.sh && bash scripts/t2_update_coupons_get_by_id_lambda.sh && bash scripts/t2_update_coupons_update_lambda.sh && bash scripts/t2_add_index_to_dynamodb_table.sh"
+
+# Run and save both unit-test suites.
+npm test --prefix .\lambda\coupons_get_by_id -- --runInBand --json --outputFile=..\..\part2_get_by_id_unit_test_output.json
+npm test --prefix .\lambda\coupons_update -- --runInBand --json --outputFile=..\..\part2_update_unit_test_output.json
+
+# Test GET /coupons/{id}.
+$API_ID = "3iredn6zwg"
+$COUPON_ID = "319326de971100158f6fa0daeec978fba1f17e4b"
+$COUPON_URL = "http://localhost:4566/_aws/execute-api/$API_ID/local/coupons/$COUPON_ID"
+$getResponse = Invoke-RestMethod -Uri $COUPON_URL -Method GET
+$getResponse | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 .\part2_get_by_id_output.json
+
+# Test PUT /coupons/{id} and retrieve the saved update.
+$updateBody = @{ title = "Updated Fairmont assessment offer"; campaign_id = "SPRING2027" } | ConvertTo-Json
+$updateResponse = Invoke-RestMethod -Uri $COUPON_URL -Method PUT -ContentType "application/json" -Body $updateBody
+$updateResponse | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 .\part2_update_output.json
+$afterUpdate = Invoke-RestMethod -Uri $COUPON_URL -Method GET
+$afterUpdate | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 .\part2_get_after_update_output.json
+
+# Query the provider_id and campaign_id global secondary index.
+@{ ":provider" = @{ S = "FAIRMONT" }; ":campaign" = @{ S = "SPRING2027" } } | ConvertTo-Json -Compress | Set-Content -Encoding ASCII .\part2_query_values.json
+$gsiResult = aws --no-cli-pager --endpoint-url http://localhost:4566 --profile localstack dynamodb query --table-name coupons --index-name provider_id-campaign_id-index --key-condition-expression "provider_id = :provider AND campaign_id = :campaign" --expression-attribute-values file://part2_query_values.json | ConvertFrom-Json
+$gsiResult | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 .\part2_gsi_query_output.json
+
+# Save the table capacity and index configuration.
+$tableResult = aws --no-cli-pager --endpoint-url http://localhost:4566 --profile localstack dynamodb describe-table --table-name coupons | ConvertFrom-Json
+$tableResult | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 .\part2_table_output.json
