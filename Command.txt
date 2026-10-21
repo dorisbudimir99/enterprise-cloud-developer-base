@@ -1,0 +1,34 @@
+Assessment Part 1 commands
+
+# Run from the repository root in PowerShell.
+
+# Verify the LocalStack container.
+docker ps --filter "name=enterprise-cloud-localstack"
+
+# Bootstrap the supplied assessment environment.
+wsl bash -lc "cd /mnt/c/Users/doris/enterprise-cloud-developer-base && export AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 AWS_PAGER=''; bash scripts/t0_bootstrap_environment.sh"
+
+# Provision the Part 1 IAM role, Lambda, and API endpoint.
+wsl bash -lc "cd /mnt/c/Users/doris/enterprise-cloud-developer-base && export AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 AWS_PAGER=''; bash scripts/t1_provision_coupons_lambda_role.sh"
+wsl bash -lc "cd /mnt/c/Users/doris/enterprise-cloud-developer-base && export AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 AWS_PAGER=''; bash scripts/t1_provision_coupons_list_lambda.sh"
+wsl bash -lc "cd /mnt/c/Users/doris/enterprise-cloud-developer-base && export AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 AWS_PAGER=''; bash scripts/t1_provision_coupons_endpoint.sh"
+
+# Run the coupons_list unit test and save JSON evidence.
+npm test --prefix .\lambda\coupons_list -- --runInBand --json --outputFile=..\..\part1_unit_test_output.json
+
+# Retrieve the API identifier and test the endpoint.
+$env:AWS_ACCESS_KEY_ID = "test"
+$env:AWS_SECRET_ACCESS_KEY = "test"
+$env:AWS_DEFAULT_REGION = "us-east-1"
+$API_ID = (aws --no-cli-pager --endpoint-url http://localhost:4566 --profile localstack apigateway get-rest-apis --query "items[?name=='coupons'].id | [0]" --output text)
+$API_URL = "http://localhost:4566/_aws/execute-api/$API_ID/local/coupons_poc"
+$response = Invoke-RestMethod -Uri $API_URL -Method GET
+$response | ConvertTo-Json -Depth 10
+$response | ConvertTo-Json -Depth 10 | Set-Content -Encoding UTF8 .\part1_api_output.json
+
+# Run the Newman collection and save JSON evidence.
+npx newman run .\newman_tests\coupons_newman.json --env-var "apiId=$API_ID" --reporters cli,json --reporter-json-export .\part1_newman_output.json
+
+# Review resources.
+aws --no-cli-pager --endpoint-url http://localhost:4566 --profile localstack iam list-role-policies --role-name coupons_lambda_role
+aws --no-cli-pager --endpoint-url http://localhost:4566 --profile localstack lambda get-function-configuration --function-name coupons_list

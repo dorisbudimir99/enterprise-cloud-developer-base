@@ -1,0 +1,49 @@
+{
+  "info": {
+    "name": "Coupons API LocalStack Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "apiId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "GET coupons_poc returns coupon list",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:4566/_aws/execute-api/{{apiId}}/local/coupons_poc",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "4566",
+          "path": ["_aws", "execute-api", "{{apiId}}", "local", "coupons_poc"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Response is the expected coupon list', function () {",
+              "  const response = pm.response.json();",
+              "  pm.expect(response).to.be.an('array').with.lengthOf(3);",
+              "  pm.expect(response[0].coupon_id).to.eql('319326de971100158f6fa0daeec978fba1f17e4b');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
